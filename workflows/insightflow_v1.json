@@ -1,0 +1,136 @@
+{
+  "name": "insightflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insightflow",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "295fce2e-3023-4566-a5d1-6b5ec48e5b90",
+      "name": "Webhook",
+      "webhookId": "50a5b5db-aefd-4876-8365-45bbfc127407"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\": \"{{ $json.body.query }}\",\n  \"gl\": \"id\",\n  \"hl\": \"id\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "7ba534e8-33d7-496c-9ee0-a59c576129b3",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "clWCWywdcBep3frR",
+          "name": "Serper Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Market Analyst. Tugas anda adalah merangkum data pencarian menjadi laporan insight singkat, padat, dan strategis dalam Bahasa Indonesia. Fokus pada: Tren, Sentimen, dan Peluang.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": \"Analisis data berikut: \" + JSON.stringify($json.organic)\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b29ec254-7dfe-4c24-8199-b4154b6d1721",
+      "name": "Groq LLM",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VeLci9zU8Vjsdd8A",
+          "name": "Groq Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    \"result\": $json.choices[0].message.content\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        0
+      ],
+      "id": "0dee187f-5d11-4a7c-99da-b2c832f278b5",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Groq LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq LLM": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "3f467b3f-edf9-4210-94f6-3fb89b4c5394",
+  "meta": {
+    "instanceId": "74b6011f15b8795ee24f6491ff661b1c188bff628c7cdab1dd8c3cd8ffdf0cdd"
+  },
+  "id": "5hUIBwUkmg4E7x8b",
+  "tags": []
+}
