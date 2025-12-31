@@ -1,0 +1,149 @@
+{
+  "name": "insightflow_crypto",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insightflow-crypto",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7a8c0388-8df7-4581-84e6-768f45c80ece",
+      "name": "Webhook",
+      "webhookId": "ca5f2e9c-33f9-46cd-9371-faf1a3c77458"
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/global",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2cc2e319-52af-4074-8c0b-f3405cc72347",
+      "name": "Get Market Data"
+    },
+    {
+      "parameters": {
+        "url": "https://api.alternative.me/fng/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0e33143c-e320-4a53-94c8-86590bd739d7",
+      "name": "Get FnG"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n(() => {\n  // 1. Definisikan Variabel di dalam fungsi (Aman)\n  // Pastikan nama node di dalam $('...') SAMA PERSIS dengan nama node di kanvas Anda\n  const globalData = $('Get Market Data').first().json.data; \n  const sentimentData = $('Get FnG').first().json.data[0];\n  \n  // 2. Return Objek Payload untuk dikirim ke Groq\n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Crypto Market Analyst. Tugas Anda adalah menentukan 'Market Regime' hari ini berdasarkan data. Output harus ringkas dan tajam.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Analisis data pasar berikut untuk menentukan konteks hari ini (Pre-Market Alignment):\n\n        DATA PASAR:\n        - BTC Dominance: ${globalData.market_cap_percentage.btc.toFixed(2)}%\n        - ETH Dominance: ${globalData.market_cap_percentage.eth.toFixed(2)}%\n        - Total Market Cap Change (24h): ${globalData.market_cap_change_percentage_24h_usd.toFixed(2)}%\n        \n        DATA SENTIMEN:\n        - Fear & Greed Index: ${sentimentData.value} (${sentimentData.value_classification})\n        \n        Berdasarkan data di atas, lakukan aktivitas Pre-Market Alignment sesuai workflow analyst:\n        1. Tentukan Market Regime (Risk-On / Risk-Off / Transition).\n        2. Analisis Narasi Aliran Modal (Rotasi Altcoin vs BTC).\n        3. Identifikasi jika ada anomali sentimen vs harga.\n        \n        Output WAJIB dalam format JSON: { \"regime\": \"...\", \"btc_dominance_trend\": \"...\", \"narrative\": \"...\" }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "67d02695-dd61-4ed0-9efe-469ea6bfe587",
+      "name": "Analyze Market Regime",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VeLci9zU8Vjsdd8A",
+          "name": "Groq Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  // JSON.parse mengubah string teks menjadi Objek JSON asli\n  JSON.parse($json.choices[0].message.content)\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        0
+      ],
+      "id": "15a27412-37f7-4360-a1ac-f8ce028fce32",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Market Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Market Data": {
+      "main": [
+        [
+          {
+            "node": "Get FnG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get FnG": {
+      "main": [
+        [
+          {
+            "node": "Analyze Market Regime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Market Regime": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "c0c5dce0-368c-4d63-93f4-3d30d477195d",
+  "meta": {
+    "instanceId": "74b6011f15b8795ee24f6491ff661b1c188bff628c7cdab1dd8c3cd8ffdf0cdd"
+  },
+  "id": "1oyll82MYR3HWdwx",
+  "tags": []
+}
