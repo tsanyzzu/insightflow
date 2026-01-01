@@ -1,0 +1,36 @@
+/* Import Font Keren (Opsional) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Styling Kartu Metrik agar seperti Dashboard Trading */
+div[data-testid="stMetric"] {
+    background-color: #161b22; /* Darker Github bg */
+    border: 1px solid #30363d;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+div[data-testid="stMetric"]:hover {
+    border-color: #58a6ff; /* Highlight color on hover */
+    transition: 0.3s;
+}
+
+/* Styling Container (kotak border) */
+div[data-testid="stVerticalBlock"] > div[style*="border"] {
+    background-color: #0d1117;
+    border: 1px solid #30363d !important;
+}
+
+/* Judul & Header */
+h1, h2, h3 {
+    color: #e6edf3 !important;
+}
+
+/* Custom Success/Error Message */
+.stAlert {
+    border-radius: 8px;
+}
