@@ -11,66 +11,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -256,
-        192
+        -544,
+        96
       ],
       "id": "7a8c0388-8df7-4581-84e6-768f45c80ece",
       "name": "Webhook",
       "webhookId": "ca5f2e9c-33f9-46cd-9371-faf1a3c77458"
-    },
-    {
-      "parameters": {
-        "url": "https://api.coingecko.com/api/v3/global",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        208,
-        0
-      ],
-      "id": "2cc2e319-52af-4074-8c0b-f3405cc72347",
-      "name": "Get Market Data"
-    },
-    {
-      "parameters": {
-        "url": "https://api.alternative.me/fng/",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        448,
-        -16
-      ],
-      "id": "0e33143c-e320-4a53-94c8-86590bd739d7",
-      "name": "Get FnG"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{\n(() => {\n  const globalData = $('Get Market Data').first().json.data; \n  const sentimentData = $('Get FnG').first().json.data[0];\n  \n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Crypto Market Analyst. Output JSON only.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Analisis data pasar berikut:\n\n        DATA PASAR:\n        - BTC Dominance: ${globalData.market_cap_percentage.btc.toFixed(2)}%\n        - Total Cap Change: ${globalData.market_cap_change_percentage_24h_usd.toFixed(2)}%\n        \n        DATA SENTIMEN:\n        - Fear & Greed Index: ${sentimentData.value} (${sentimentData.value_classification})\n        \n        Tugas:\n        1. Tentukan Market Regime.\n        2. Analisis Sentimen & Dominance.\n\n        Output WAJIB JSON dengan struktur persis ini:\n        { \n          \"regime\": \"Risk-On/Risk-Off\", \n          \"btc_dominance_trend\": \"Analisis trend dominance...\", \n          \"sentiment_score\": ${sentimentData.value},\n          \"sentiment_label\": \"${sentimentData.value_classification}\",\n          \"analysis_summary\": \"Rangkuman naratif singkat...\" \n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        624,
-        0
-      ],
-      "id": "67d02695-dd61-4ed0-9efe-469ea6bfe587",
-      "name": "Analyze Market Regime",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "VeLci9zU8Vjsdd8A",
-          "name": "Groq Key"
-        }
-      }
     },
     {
       "parameters": {
@@ -81,8 +27,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        832,
-        0
+        864,
+        -272
       ],
       "id": "15a27412-37f7-4360-a1ac-f8ce028fce32",
       "name": "Respond to Webhook"
@@ -172,11 +118,41 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -48,
-        240
+        -320,
+        80
       ],
       "id": "3537f0aa-b363-4ec5-97d4-8a0389e86903",
       "name": "Switch"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  // JSON.parse mengubah string teks menjadi Objek JSON asli\n  JSON.parse($json.choices[0].message.content)\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        640,
+        80
+      ],
+      "id": "c873ca95-be60-41fc-a96b-64ba47b8fb59",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  // JSON.parse mengubah string teks menjadi Objek JSON asli\n  JSON.parse($json.choices[0].message.content)\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        448
+      ],
+      "id": "9df30ce3-0885-43f7-8436-78dce299bf6a",
+      "name": "Respond to Webhook2"
     },
     {
       "parameters": {
@@ -186,21 +162,47 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n(() => {\n  const searchData = $('Search Narratives').first().json.organic;\n\n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a Crypto Trend Hunter. Identify emerging narratives (e.g., AI, RWA, Gaming). Output JSON ONLY.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Analyze these search results: ${JSON.stringify(searchData)}.\n        Create a 'Narrative Radar'.\n        Identify 3 top narratives currently trending.\n        For each, assign:\n        - Name (e.g. AI Agents)\n        - Maturity (Early / Hype / Peak / Late)\n        - Velocity (Exploding / Rising / Stable / Fading)\n        - Insight (One sentence reason)\n\n        Output JSON Format:\n        {\n          \"summary_insight\": \"General market narrative summary...\",\n          \"narratives\": [\n            {\"name\": \"...\", \"maturity\": \"...\", \"velocity\": \"...\", \"insight\": \"...\"}\n          ]\n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
+        "jsonBody": "={{\n(() => {\n  // AMBIL DATA\n  const searchResults = $('Serper - Search Coin').first().json.organic;\n  const coinName = $('Webhook').first().json.body.query || $('Switch').first().json.query || \"Unknown Project\";\n\n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Investment Strategist. Tugas Anda adalah membuat 'Investment Thesis' & 'Scenario Modeling'. Anda realistis, konservatif, dan berbasis data.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Lakukan Audit Lengkap (Fundamental + Tokenomics + Scenario) untuk: \"${coinName}\".\n        \n        DATA: ${JSON.stringify(searchResults)}\n\n        SCENARIO MODELING TASK:\n        Berdasarkan narasi dan fundamental, buatlah 3 Skenario Harga untuk 6-12 bulan ke depan:\n        1. **Bull Case:** Jika narasi meledak & adopsi naik.\n        2. **Base Case:** Jika tren berlanjut normal.\n        3. **Bear Case:** Jika ada hack, regulasi ketat, atau market crash.\n        \n        *Estimasi persentase kenaikan/penurunan (ROI) yang logis untuk masing-masing skenario.*\n\n        OUTPUT JSON STRICT:\n        {\n          \"project_name\": \"${coinName}\",\n          \"score\": 0.0,\n          \"risk_level\": \"Low/Med/High\",\n          \"verdict\": \"...\",\n          \"pros\": [...],\n          \"cons\": [...],\n          \"tokenomics_audit\": {\n             \"inflation_status\": \"...\",\n             \"unlock_warning\": \"...\",\n             \"fdv_analysis\": \"...\"\n          },\n          \"scenario_analysis\": {\n             \"bull_case\": {\"target\": \"Contoh: $250 (+50%)\", \"condition\": \"Adopsi masif di RWA\"},\n             \"base_case\": {\"target\": \"Contoh: $180 (+10%)\", \"condition\": \"Pertumbuhan user stabil\"},\n             \"bear_case\": {\"target\": \"Contoh: $100 (-40%)\", \"condition\": \"Network outage berulang\"}\n          }\n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        496,
-        176
+        400,
+        448
       ],
-      "id": "338afe39-ee87-42f6-80e8-c40d2b465f9a",
-      "name": "Analyze Narrative",
+      "id": "783f4bd4-0791-401c-9a62-871b21a89a3d",
+      "name": "Groq - Deep Dive",
       "credentials": {
         "httpHeaderAuth": {
           "id": "VeLci9zU8Vjsdd8A",
           "name": "Groq Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\": \"{{$('Webhook').item.json.body.query }} tokenomics vesting schedule unlock cliff inflation rate fdv vs market cap revenue business model analysis\",\n  \"gl\": \"us\",\n  \"hl\": \"en\",\n  \"num\": 6\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        176,
+        448
+      ],
+      "id": "fb7902e1-522a-4f4d-bfd8-40b714a46044",
+      "name": "Serper - Search Coin",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "clWCWywdcBep3frR",
+          "name": "Serper Key"
         }
       }
     },
@@ -218,32 +220,17 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        288,
-        176
+        192,
+        80
       ],
       "id": "2031b08d-7a5b-431e-99c9-04694fae0da4",
-      "name": "Search Narratives",
+      "name": "Serper - Search Narratives",
       "credentials": {
         "httpHeaderAuth": {
           "id": "clWCWywdcBep3frR",
           "name": "Serper Key"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{\n  // JSON.parse mengubah string teks menjadi Objek JSON asli\n  JSON.parse($json.choices[0].message.content)\n}}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        720,
-        192
-      ],
-      "id": "c873ca95-be60-41fc-a96b-64ba47b8fb59",
-      "name": "Respond to Webhook1"
     },
     {
       "parameters": {
@@ -253,17 +240,17 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n(() => {\n  const searchResult = $('Search Coin').first().json.organic;\n  const coinName =  $('Webhook').item.json.body.query  || \"Unknown\"\n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Crypto Fundamental Analyst yang skeptis dan kritis. Tujuan Anda adalah melindungi investor dari proyek 'sampah' dan menemukan 'permata' tersembunyi. Jangan pernah terdengar seperti marketing. Gunakan Bahasa Indonesia profesional.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Lakukan Audit Fundamental mendalam untuk proyek: \"${coinName}\".\n        \n        Gunakan DATA PENCARIAN berikut sebagai satu-satunya sumber fakta:\n        ${JSON.stringify(searchResults)}\n\n        TUGAS ANALISIS:\n        1. **Value Prop:** Apakah masalah yang diselesaikan nyata? Atau hanya buzzword?\n        2. **Moat & Utility:** Apakah tokennya punya kegunaan riil (bukan sekadar governance)?\n        3. **Risiko:** Cari red flags (kompetitor kuat, regulasi, inflasi token).\n        4. **Verdict:** Berikan skor 1-10 yang jujur.\n           - <5: Sell/Avoid (Fundamental lemah)\n           - 5-7: Wait/Watch (Potensi tapi berisiko)\n           - >8: Buy/Accumulate (Strong conviction)\n\n        OUTPUT WAJIB JSON (Strict Format):\n        {\n          \"project_name\": \"${coinName}\",\n          \"score\": 0.0,\n          \"pros\": [\"Poin positif 1\", \"Poin positif 2\", ...],\n          \"cons\": [\"Risiko 1\", \"Kelemahan 2\", ...],\n          \"verdict\": \"Satu kalimat kesimpulan tajam yang actionable.\"\n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
+        "jsonBody": "={{\n(() => {\n  const searchData = $('Serper - Search Narratives').first().json.organic;\n\n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a Crypto Trend Hunter. Identify emerging narratives (e.g., AI, RWA, Gaming). Output JSON ONLY.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Analyze these search results: ${JSON.stringify(searchData)}.\n        Create a 'Narrative Radar'.\n        Identify 3 top narratives currently trending.\n        For each, assign:\n        - Name (e.g. AI Agents)\n        - Maturity (Early / Hype / Peak / Late)\n        - Velocity (Exploding / Rising / Stable / Fading)\n        - Insight (One sentence reason)\n\n        Output JSON Format:\n        {\n          \"summary_insight\": \"General market narrative summary...\",\n          \"narratives\": [\n            {\"name\": \"...\", \"maturity\": \"...\", \"velocity\": \"...\", \"insight\": \"...\"}\n          ]\n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        432,
-        432
+        416,
+        80
       ],
-      "id": "783f4bd4-0791-401c-9a62-871b21a89a3d",
-      "name": "Deep Dive",
+      "id": "338afe39-ee87-42f6-80e8-c40d2b465f9a",
+      "name": "Groq - Analyze Narrative",
       "credentials": {
         "httpHeaderAuth": {
           "id": "VeLci9zU8Vjsdd8A",
@@ -273,44 +260,102 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://google.serper.dev/search",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"q\": \"{{ $('Webhook').item.json.body.query }} tokenomics revenue business model competitor analysis crypto\",\n  \"gl\": \"us\",\n  \"hl\": \"en\",\n  \"num\": 5\n}",
+        "url": "https://api.coingecko.com/api/v3/global",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        176,
-        416
+        192,
+        -272
       ],
-      "id": "fb7902e1-522a-4f4d-bfd8-40b714a46044",
-      "name": "Search Coin",
+      "id": "2cc2e319-52af-4074-8c0b-f3405cc72347",
+      "name": "CoinGecko - Get Market Data"
+    },
+    {
+      "parameters": {
+        "url": "https://api.alternative.me/fng/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        -272
+      ],
+      "id": "0e33143c-e320-4a53-94c8-86590bd739d7",
+      "name": "Alternative.me - Get FnG"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n(() => {\n  const globalData = $('CoinGecko - Get Market Data').first().json.data; \n  const sentimentData = $('Alternative.me - Get FnG').first().json.data[0];\n  \n  return {\n    \"model\": \"llama-3.3-70b-versatile\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Anda adalah Senior Crypto Market Analyst. Output JSON only.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": `Analisis data pasar berikut:\n\n        DATA PASAR:\n        - BTC Dominance: ${globalData.market_cap_percentage.btc.toFixed(2)}%\n        - Total Cap Change: ${globalData.market_cap_change_percentage_24h_usd.toFixed(2)}%\n        \n        DATA SENTIMEN:\n        - Fear & Greed Index: ${sentimentData.value} (${sentimentData.value_classification})\n        \n        Tugas:\n        1. Tentukan Market Regime.\n        2. Analisis Sentimen & Dominance.\n\n        Output WAJIB JSON dengan struktur persis ini:\n        { \n          \"regime\": \"Risk-On/Risk-Off\", \n          \"btc_dominance_trend\": \"Analisis trend dominance...\", \n          \"sentiment_score\": ${sentimentData.value},\n          \"sentiment_label\": \"${sentimentData.value_classification}\",\n          \"analysis_summary\": \"Rangkuman naratif singkat...\" \n        }`\n      }\n    ],\n    \"response_format\": { \"type\": \"json_object\" }\n  };\n})()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        640,
+        -272
+      ],
+      "id": "67d02695-dd61-4ed0-9efe-469ea6bfe587",
+      "name": "Groq - Analyze Market Regime",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "clWCWywdcBep3frR",
-          "name": "Serper Key"
+          "id": "VeLci9zU8Vjsdd8A",
+          "name": "Groq Key"
         }
       }
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{\n  // JSON.parse mengubah string teks menjadi Objek JSON asli\n  JSON.parse($json.choices[0].message.content)\n}}",
-        "options": {}
+        "content": "# Deep Dive Flow",
+        "height": 80,
+        "width": 288
       },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
-        672,
-        448
+        176,
+        288
       ],
-      "id": "9df30ce3-0885-43f7-8436-78dce299bf6a",
-      "name": "Respond to Webhook2"
+      "typeVersion": 1,
+      "id": "aeab2c4d-050f-4b6b-8714-3e14e59fab9d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Narrative Radar Flow",
+        "height": 80,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        176,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "b3b41983-9e0f-4d58-9a86-116566635f53",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Quant Flow",
+        "height": 80,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        192,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "296ad374-bb55-4586-9762-119187e37c0a",
+      "name": "Sticky Note2"
     }
   ],
   "pinData": {},
@@ -326,76 +371,65 @@
         ]
       ]
     },
-    "Get Market Data": {
-      "main": [
-        [
-          {
-            "node": "Get FnG",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get FnG": {
-      "main": [
-        [
-          {
-            "node": "Analyze Market Regime",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Analyze Market Regime": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Switch": {
       "main": [
         [
           {
-            "node": "Get Market Data",
+            "node": "CoinGecko - Get Market Data",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Search Narratives",
+            "node": "Serper - Search Narratives",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Search Coin",
+            "node": "Serper - Search Coin",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Search Narratives": {
+    "Groq - Deep Dive": {
       "main": [
         [
           {
-            "node": "Analyze Narrative",
+            "node": "Respond to Webhook2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Analyze Narrative": {
+    "Serper - Search Coin": {
+      "main": [
+        [
+          {
+            "node": "Groq - Deep Dive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serper - Search Narratives": {
+      "main": [
+        [
+          {
+            "node": "Groq - Analyze Narrative",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq - Analyze Narrative": {
       "main": [
         [
           {
@@ -406,22 +440,33 @@
         ]
       ]
     },
-    "Search Coin": {
+    "CoinGecko - Get Market Data": {
       "main": [
         [
           {
-            "node": "Deep Dive",
+            "node": "Alternative.me - Get FnG",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Deep Dive": {
+    "Alternative.me - Get FnG": {
       "main": [
         [
           {
-            "node": "Respond to Webhook2",
+            "node": "Groq - Analyze Market Regime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq - Analyze Market Regime": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
@@ -434,7 +479,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "906c0ef5-59fc-42fe-940e-ad87127a26b6",
+  "versionId": "1f65de3c-7e5e-47b3-93c9-140ce17a06c7",
   "meta": {
     "instanceId": "74b6011f15b8795ee24f6491ff661b1c188bff628c7cdab1dd8c3cd8ffdf0cdd"
   },
