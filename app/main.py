@@ -195,6 +195,42 @@ with tab3:
                         st.error("⚠️ **Risiko (Product & Supply)**")
                         for con in data.get('cons', []):
                             st.write(f"- {con}")
+                    
+                    st.divider()
+
+                    # --- SECTION 4: SCENARIO MODELING (PHASE 6) ---
+                    st.markdown("#### 🎯 Investment Scenario Matrix (6-12 Months)")
+                    st.caption("Proyeksi berbasis volatilitas dan fundamental (Bukan nasihat keuangan).")
+
+                    scenarios = data.get('scenario_analysis', {})
+                    
+                    # Mengambil data case
+                    bull = scenarios.get('bull_case', {})
+                    base = scenarios.get('base_case', {})
+                    bear = scenarios.get('bear_case', {})
+
+                    # Tampilan Kolom
+                    s1, s2, s3 = st.columns(3)
+
+                    # BULL CASE (Hijau)
+                    with s1:
+                        st.success("🚀 Bull Case (Optimistic)")
+                        st.metric("Target", bull.get('target', '-'))
+                        st.write(f"**Syarat:** {bull.get('condition', '-')}")
+
+                    # BASE CASE (Abu-abu/Biru)
+                    with s2:
+                        st.info("⚖️ Base Case (Realistic)")
+                        st.metric("Target", base.get('target', '-'))
+                        st.write(f"**Syarat:** {base.get('condition', '-')}")
+
+                    # BEAR CASE (Merah)
+                    with s3:
+                        st.error("🐻 Bear Case (Pessimistic)")
+                        st.metric("Target", bear.get('target', '-'))
+                        st.write(f"**Syarat:** {bear.get('condition', '-')}")
+
+                        
 
 # SIDEBAR for development phase info 
 with st.sidebar:
