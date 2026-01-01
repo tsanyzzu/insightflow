@@ -105,7 +105,7 @@ with tab2:
                 # Membuat Grid Layout
                 cols = st.columns(3)
                 for idx, item in enumerate(narratives):
-                    with cols[idx % 3]: # Membagi ke kolom secara merata
+                    with cols[idx % 3]: 
                         with st.container(border=True):
                             st.subheader(item.get('name', 'Unknown'))
                             
@@ -117,73 +117,93 @@ with tab2:
                             st.progress(90 if 'Hype' in item.get('maturity','') else 40)
                             st.caption(f"Phase: {item.get('maturity', '-')}")
                             st.write(item.get('insight', '-'))
-# TAB 3: DEEP DIVE 
+# TAB 3: DEEP DIVE (FUNDAMENTAL + TOKENOMICS) 
 with tab3:
-    st.markdown("### 🔍 Fundamental Deep Dive")
-    st.caption("Audit fundamental proyek: Tokenomics, Business Model, & Competitive Moat.")
+    st.markdown("### 🔍 Fundamental & Risk Audit")
+    st.caption("Analisis menyeluruh: Produk, Model Bisnis, dan Risiko Suplai (Tokenomics).")
 
-    coin_query = st.text_input("Masukkan nama proyek/koin:", placeholder="Contoh: Solana, Ondo Finance, Pendle...")
+    coin_query = st.text_input("Masukkan nama proyek/koin:", placeholder="Contoh: Optimism, Arbitrum, Worldcoin...")
 
-    if st.button("ANALYZE PROJECT 🧪", key="btn_deep_dive"):
+    if st.button("START AUDIT 🧪", key="btn_deep_dive"):
         if not coin_query:
             st.warning("Mohon isi nama proyek.")
         else:
-            with st.spinner(f"Melakukan audit fundamental untuk {coin_query}..."):
-                
-                payload = {
-                    "action": "deep_dive", 
-                    "query": coin_query
-                }
-
+            with st.spinner(f"Melakukan bedah fundamental & tokenomics untuk {coin_query}..."):
+                payload = {"action": "deep_dive", "query": coin_query}
                 data = call_n8n(payload)
                 
-                # UI
                 if "error" in data:
                     st.error(data['error'])
                 else:
-                    # Header Laporan
+                    # HEADER & VERDICT SECTION
                     project_name = data.get('project_name', coin_query)
                     st.subheader(f"📑 Laporan Audit: {project_name}")
+    
+                    m1, m2, m3 = st.columns(3)
                     
-                    # Score Gauge & Verdict
+                    # Skor Fundamental
                     score = data.get('score', 0)
-                    col_score, col_verdict = st.columns([1, 2])
+                    m1.metric("Fundamental Score", f"{score}/10")
                     
-                    with col_score:
-                        st.metric("Fundamental Score", f"{score}/10")
-                        st.progress(score / 10)
+                    # Risk Level 
+                    risk_lvl = data.get('risk_level', 'Unknown')
+                    risk_color = "normal"
+                    if "High" in risk_lvl or "Extreme" in risk_lvl: risk_color = "inverse"
+                    m2.metric("Supply Risk Level", risk_lvl, delta_color=risk_color)
                     
-                    with col_verdict:
-                        st.info(f"**💡 Verdict:** {data.get('verdict', '-')}")
+                    # Verdict Singkat
+                    m3.info(f"**Verdict:** {data.get('verdict', '-')}")
 
-                    # Pros & Cons Section
+                    st.progress(score / 10)
+                    st.divider()
+
+                    # TOKENOMICS INTELLIGENCE SECTION
+                    st.markdown("#### 🔓 Tokenomics & Supply Analysis")
+                    
+                    # Mengambil data nested tokenomics
+                    tokenomics = data.get('tokenomics_audit', {})
+                    
+                    # Grid untuk Tokenomics
+                    t1, t2, t3 = st.columns(3)
+                    with t1:
+                        with st.container(border=True):
+                            st.caption("📉 Inflation / Emission")
+                            st.write(tokenomics.get('inflation_status', '-'))
+                    with t2:
+                        with st.container(border=True):
+                            st.caption("🔐 Unlock Schedule")
+                            unlock_info = tokenomics.get('unlock_warning', '-')
+                            if "Bahaya" in unlock_info or "besar" in unlock_info.lower():
+                                st.error(unlock_info)
+                            else:
+                                st.write(unlock_info)
+                    with t3:
+                        with st.container(border=True):
+                            st.caption("💰 FDV vs Market Cap")
+                            st.write(tokenomics.get('fdv_analysis', '-'))
+
+                    st.divider()
+
+                    # PROS & CONS SECTION  
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.success("✅ **Kekuatan (Pros)**")
-                        pros = data.get('pros', [])
-                        if pros:
-                            for pro in pros:
-                                st.write(f"- {pro}")
-                        else:
-                            st.write("- Data tidak ditemukan")
+                        st.success("✅ **Kekuatan (Fundamental)**")
+                        for pro in data.get('pros', []):
+                            st.write(f"- {pro}")
 
                     with c2:
-                        st.error("⚠️ **Risiko (Cons)**")
-                        cons = data.get('cons', [])
-                        if cons:
-                            for con in cons:
-                                st.write(f"- {con}")
-                        else:
-                            st.write("- Data tidak ditemukan")
+                        st.error("⚠️ **Risiko (Product & Supply)**")
+                        for con in data.get('cons', []):
+                            st.write(f"- {con}")
 
 # SIDEBAR for development phase info 
 with st.sidebar:
     st.info("Current Phase: **Phase 3 - Deep Dive Analyzer**")
     st.markdown("""
     **Workflow Status:**
-    - ✅ Phase 0: Market Context
-    - 🚧 Phase 1: Capital Rotation
-    - ⏳ Phase 2: Narrative Radar
-    - 🆕 Phase 3: Deep Dive Analyzer
+    - Phase 0: Market Context
+    - Phase 1: Capital Rotation
+    - Phase 2: Narrative Radar
+    - Phase 3: Deep Dive Analyzer
+    - ⏳ Phase 4 Tokenomics Integration  
     """)
-    
